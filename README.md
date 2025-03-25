@@ -1,3 +1,20 @@
+# CSE692 Advanced AI Project
+
+Please check the env file: `envs/vipergpt_greatlakes.yml` for the conda environment used to run the code.
+
+I use these commands to run the code on greatlakes:
+
+```bash
+module load cuda/12.1.1
+conda activate /nfs/turbo/coe-mihalcea/alvarovh/envs/vipergpt
+jupyter notebook --no-browser --port=51218 --ip=0.0.0.0
+```
+
+For building pytorch (hopefully you don't need to do this):
+
+```bash
+module load gcc/11.2.0
+```
 # ViperGPT: Visual Inference via Python Execution for Reasoning
 
 This is the code for the paper [ViperGPT: Visual Inference via Python Execution for Reasoning](https://viper.cs.columbia.edu) by [Dídac Surís](https://www.didacsuris.com/)\*, [Sachit Menon](https://sachit-menon.github.io/)\* and [Carl Vondrick](https://www.cs.columbia.edu/~vondrick/).
