@@ -8,6 +8,7 @@ import abc
 import backoff
 import contextlib
 import openai
+from openai import OpenAI
 import os
 import re
 import timeit
@@ -31,6 +32,8 @@ from utils import HiddenPrints
 
 with open('api.key') as f:
     openai.api_key = f.read().strip()
+
+client = OpenAI(api_key=openai.api_key)
 
 cache = Memory('cache/' if config.use_cache else None, verbose=0)
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -879,6 +882,7 @@ class GPT3Model(BaseModel):
 
     def query_gpt3(self, prompt, model="text-davinci-003", max_tokens=16, logprobs=None, stream=False,
                    stop=None, top_p=1, frequency_penalty=0, presence_penalty=0):
+        print("INSIDE QUERY GPT3")
         if model == "chatgpt":
             messages = [{"role": "user", "content": p} for p in prompt]
             response = openai.ChatCompletion.create(
@@ -955,16 +959,16 @@ class GPT3Model(BaseModel):
 # @cache.cache
 @backoff.on_exception(backoff.expo, Exception, max_tries=10)
 def codex_helper(extended_prompt):
+    print("INSIDE CODEX HELPER")
     assert 0 <= config.codex.temperature <= 1
     assert 1 <= config.codex.best_of <= 20
 
     if config.codex.model in ("gpt-4", "gpt-3.5-turbo"):
         if not isinstance(extended_prompt, list):
             extended_prompt = [extended_prompt]
-        responses = [openai.ChatCompletion.create(
+        responses = [client.chat.completions.create(
             model=config.codex.model,
             messages=[
-                # {"role": "system", "content": "You are a helpful assistant."},
                 {"role": "system", "content": "Only answer with a function starting def execute_command."},
                 {"role": "user", "content": prompt}
             ],
@@ -973,15 +977,11 @@ def codex_helper(extended_prompt):
             top_p=1.,
             frequency_penalty=0,
             presence_penalty=0,
-            #                 best_of=config.codex.best_of,
-            stop=["\n\n"],
-        )
-            for prompt in extended_prompt]
-        resp = [r['choices'][0]['message']['content'].replace("execute_command(image)",
-                                                              "execute_command(image, my_fig, time_wait_between_lines, syntax)")
+            # stop=["\n\n"],
+        ) for prompt in extended_prompt]
+        resp = [r.choices[0].message.content.replace("execute_command(image)",
+                                                       "execute_command(image, my_fig, time_wait_between_lines, syntax)")
                 for r in responses]
-    #         if len(resp) == 1:
-    #             resp = resp[0]
     else:
         warnings.warn('OpenAI Codex is deprecated. Please use GPT-4 or GPT-3.5-turbo.')
         response = openai.Completion.create(
@@ -997,11 +997,61 @@ def codex_helper(extended_prompt):
         )
 
         if isinstance(extended_prompt, list):
-            resp = [r['text'] for r in response['choices']]
+            resp = [r.text for r in response.choices]
         else:
-            resp = response['choices'][0]['text']
+            resp = response.choices[0].text
 
     return resp
+
+# def codex_helper(extended_prompt):
+#     print("INSIDE CODEX HELPER")
+#     assert 0 <= config.codex.temperature <= 1
+#     assert 1 <= config.codex.best_of <= 20
+
+#     if config.codex.model in ("gpt-4", "gpt-3.5-turbo"):
+#         if not isinstance(extended_prompt, list):
+#             extended_prompt = [extended_prompt]
+#         responses = [openai.ChatCompletion.create(
+#             model=config.codex.model,
+#             messages=[
+#                 # {"role": "system", "content": "You are a helpful assistant."},
+#                 {"role": "system", "content": "Only answer with a function starting def execute_command."},
+#                 {"role": "user", "content": prompt}
+#             ],
+#             temperature=config.codex.temperature,
+#             max_tokens=config.codex.max_tokens,
+#             top_p=1.,
+#             frequency_penalty=0,
+#             presence_penalty=0,
+#             #                 best_of=config.codex.best_of,
+#             stop=["\n\n"],
+#         )
+#             for prompt in extended_prompt]
+#         resp = [r['choices'][0]['message']['content'].replace("execute_command(image)",
+#                                                               "execute_command(image, my_fig, time_wait_between_lines, syntax)")
+#                 for r in responses]
+#     #         if len(resp) == 1:
+#     #             resp = resp[0]
+#     else:
+#         warnings.warn('OpenAI Codex is deprecated. Please use GPT-4 or GPT-3.5-turbo.')
+#         response = openai.Completion.create(
+#             model="code-davinci-002",
+#             temperature=config.codex.temperature,
+#             prompt=extended_prompt,
+#             max_tokens=config.codex.max_tokens,
+#             top_p=1,
+#             frequency_penalty=0,
+#             presence_penalty=0,
+#             best_of=config.codex.best_of,
+#             stop=["\n\n"],
+#         )
+
+#         if isinstance(extended_prompt, list):
+#             resp = [r['text'] for r in response['choices']]
+#         else:
+#             resp = response['choices'][0]['text']
+
+#     return resp
 
 
 class CodexModel(BaseModel):
@@ -1021,38 +1071,55 @@ class CodexModel(BaseModel):
                 self.fixed_code = f.read()
 
     def forward(self, prompt, input_type='image', prompt_file=None, base_prompt=None, extra_context=None):
+        print("INSIDE CODEX FORWARD")
+        # we will debug this functionso lets print a lot of stuff
+        print("Prompt: ", prompt)
+        print("Input type: ", input_type)
+        print("Prompt file: ", prompt_file)
+        print("Base prompt: ", base_prompt)
+        print("Extra context: ", extra_context)
         if config.use_fixed_code:  # Use the same program for every sample, like in socratic models
+            print("Codex MARKER 1")
             return [self.fixed_code] * len(prompt) if isinstance(prompt, list) else self.fixed_code
 
         if prompt_file is not None and base_prompt is None:  # base_prompt takes priority
+            print("Codex MARKER 2")
             with open(prompt_file) as f:
                 base_prompt = f.read().strip()
         elif base_prompt is None:
+            print("Codex MARKER 3")
             base_prompt = self.base_prompt
 
         if isinstance(prompt, list):
+            print("Codex MARKER 4")
             extended_prompt = [base_prompt.replace("INSERT_QUERY_HERE", p).
                                replace('INSERT_TYPE_HERE', input_type).
                                replace('EXTRA_CONTEXT_HERE', str(ec))
                                for p, ec in zip(prompt, extra_context)]
         elif isinstance(prompt, str):
+            print("Codex MARKER 5")
+            if extra_context is None:
+                extra_context = ''
             extended_prompt = [base_prompt.replace("INSERT_QUERY_HERE", prompt).
                                replace('INSERT_TYPE_HERE', input_type).
                                replace('EXTRA_CONTEXT_HERE', extra_context)]
+            print(f'Extended prompt: {extended_prompt}')
         else:
+            print("Codex MARKER 6")
             raise TypeError("prompt must be a string or a list of strings")
-
+        print(f'Extended prompt: {extended_prompt}')
         result = self.forward_(extended_prompt)
         if not isinstance(prompt, list):
             result = result[0]
-
         return result
 
     def forward_(self, extended_prompt):
+        print("INSIDE CODEX FORWARD_")
         if len(extended_prompt) > self.max_batch_size:
             response = []
             for i in range(0, len(extended_prompt), self.max_batch_size):
                 response += self.forward_(extended_prompt[i:i + self.max_batch_size])
+            print("CODEX FORWARD MARKER 2")
             return response
         try:
             response = codex_helper(extended_prompt)

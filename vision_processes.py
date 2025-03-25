@@ -191,6 +191,19 @@ def forward(model_name, *args, queues=None, **kwargs):
     """
     error_msg = f'No model named {model_name}. ' \
                 'The available models are: {}. Make sure to activate it in the configs files'
+    print("INSIDE FORWARD")
+    # lets debug so print consumers keys and parameters used below, but first printing each variable name
+    print(f"model_name: {model_name}")
+    # print(f"args: {args}") # only types
+    print(f"arg types: {[type(arg) for arg in args]}")
+    print(f"queues: {queues}")
+    print(f"kwargs: {kwargs}")
+    print(f"consumers: {consumers}")
+    # consumer keys
+    print(f"consumers.keys(): {consumers.keys()}")
+    print(f"queues_in: {queues_in}")
+    print(f"config.multiprocessing: {config.multiprocessing}")
+
     if not config.multiprocessing:
         try:
             out = consumers[model_name](*args, **kwargs)
