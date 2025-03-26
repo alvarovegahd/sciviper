@@ -30,10 +30,17 @@ from typing import List, Union
 from configs import config
 from utils import HiddenPrints
 
-with open('api.key') as f:
-    openai.api_key = f.read().strip()
+#### Hot fix for ollama
+# with open('api.key') as f:
+#     openai.api_key = f.read().strip()
 
-client = OpenAI(api_key=openai.api_key)
+# client = OpenAI(api_key=openai.api_key)
+
+client = OpenAI(
+    base_url = 'http://localhost:11434/v1', # we may use GCP proxy of our lab's machines
+    api_key='ollama', # required, but unused
+)
+#######
 
 cache = Memory('cache/' if config.use_cache else None, verbose=0)
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -967,7 +974,10 @@ def codex_helper(extended_prompt):
         if not isinstance(extended_prompt, list):
             extended_prompt = [extended_prompt]
         responses = [client.chat.completions.create(
-            model=config.codex.model,
+            #### Hot fix for ollama
+            # model=config.codex.model,
+            model="deepseek-r1",
+            #######
             messages=[
                 {"role": "system", "content": "Only answer with a function starting def execute_command."},
                 {"role": "user", "content": prompt}
