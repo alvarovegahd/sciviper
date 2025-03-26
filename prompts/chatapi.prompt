@@ -337,4 +337,4 @@ Consider the following guidelines:
 - Use the llm_query function to access external information and answer informational questions not concerning the image.
 - Return an answer object at the end
 
-Query: INSERT_QUERY_HERE
+REQUIREMENT: Write a Python function called execute_command that takes an image as input and answers the query [INSERT_QUERY_HERE]. Return ONLY the function code, without any explanations, comments, or markdown formatting. The function should start with 'def execute_command(image):' and end with the last line of the function. Do not include any text before or after the function.

@@ -251,12 +251,40 @@ def load_image(path):
         image = transforms.ToTensor()(image)
     return image
 
+# this works with qwen2.5-coder
+def parse_function(code_block):
+    # Split by triple backticks and get the content
+    parts = code_block.split('```')
+    if len(parts) >= 3:
+        function_code = parts[1]
+    else:
+        function_code = code_block
+    
+    # Remove the "python" line if present
+    lines = function_code.split('\n')
+    if lines[0].strip().lower() == 'python':
+        lines = lines[1:]
+    
+    # Join the lines and strip whitespace
+    parsed_function = '\n'.join(lines).strip()
+    
+    return parsed_function
 
 def get_code(query):
     print("INSIDE GET CODE!!!")
     print(config.codex.model)
     model_name_codex = 'codellama' if config.codex.model == 'codellama' else 'codex'
     code = forward(model_name_codex, prompt=query, input_type="image")
+    # replace ``` at the begining and ``` at the end with empty string if they are present at the beginning and end
+    # if first line starts with python, remove it. it might start with a space
+    print(f"Code generated:\n {code}")
+    # save to file
+    with open('generated_code.txt', 'w') as f:
+        f.write(code)
+    code = parse_function(code)
+    with open('generated_code_strip.txt', 'w') as f:
+        f.write(code)
+
     if config.codex.model not in ('gpt-3.5-turbo', 'gpt-4'):
         code = f'def execute_command(image, my_fig, time_wait_between_lines, syntax):' + code # chat models give execute_command due to system behaviour
     code_for_syntax = code.replace("(image, my_fig, time_wait_between_lines, syntax)", "(image)")

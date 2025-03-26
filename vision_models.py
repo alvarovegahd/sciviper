@@ -37,7 +37,9 @@ from utils import HiddenPrints
 # client = OpenAI(api_key=openai.api_key)
 
 client = OpenAI(
-    base_url = 'http://localhost:11434/v1', # we may use GCP proxy of our lab's machines
+    base_url='http://35.184.244.69:8001/v1',
+    # base_url = 'http://localhost:11434/v1', # we may use GCP proxy of our lab's machines
+
     api_key='ollama', # required, but unused
 )
 #######
@@ -976,7 +978,8 @@ def codex_helper(extended_prompt):
         responses = [client.chat.completions.create(
             #### Hot fix for ollama
             # model=config.codex.model,
-            model="deepseek-r1",
+            # model="deepseek-r1",
+            model = "qwen2.5-coder",
             #######
             messages=[
                 {"role": "system", "content": "Only answer with a function starting def execute_command."},
