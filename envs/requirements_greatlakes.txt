@@ -1,6 +1,17 @@
+--extra-index-url https://download.pytorch.org/whl/cu121
+torch==2.5.1+cu121
+torchvision==0.20.1+cu121
+torchaudio==2.5.1+cu121
 git+https://github.com/openai/CLIP.git
 git+https://github.com/openai/openai-python.git
 git+https://github.com/huggingface/transformers.git
 gdown==5.2.0 # for model download
 gpustat # for monitoring GPU usage
 ipdb # for debugging
+
+# If you need to upgrade gcc
+# conda install -c conda-forge compilers
+
+# And run the following:
+# cd GLIP
+# python setup.py build develop
