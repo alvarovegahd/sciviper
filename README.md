@@ -1,5 +1,6 @@
 # CSE692 Advanced AI Project
 
+
 Please check the env file: `envs/vipergpt_greatlakes.yml` for the conda environment used to run the code.
 
 We can use 48GB gpu with this command on greatlakes:
@@ -20,6 +21,56 @@ For building pytorch (hopefully you don't need to do this):
 ```bash
 module load gcc/11.2.0
 ```
+
+## Making a reverse tunel to serve Ollama
+
+### Setup
+Create a Google Cloud VM with a public IP
+
+``` bash
+gcloud compute instances create tunnel-vm \
+  --machine-type=e2-micro \
+  --zone=us-central1-a \
+  --tags=http-server \
+  --image-family=debian-11 \
+  --image-project=debian-cloud \
+  --metadata=startup-script='#!/bin/bash
+sudo apt update && sudo apt install -y autossh'
+
+# Created [https://www.googleapis.com/compute/v1/projects/hai-specseg/zones/us-central1-a/instances/tunnel-vm].
+# NAME       ZONE           MACHINE_TYPE  PREEMPTIBLE  INTERNAL_IP  EXTERNAL_IP    STATUS
+# tunnel-vm  us-central1-a  e2-micro                   XX.XXX.X.X   XX.XXX.XXX.XX  RUNNING
+```
+Connect to it and install dependencies:
+```bash
+gcloud compute ssh tunnel-vm --zone=us-central1-a
+sudo apt install tmux autossh -y
+```
+
+Make a note of your VM's external IP address. You will need it to connect to the VM.
+- add your ssh key to the VM, so you can ssh into it
+- install tmux in the VM
+
+### Reverse tunnel
+In the local machine where you will run ollama, run:
+
+```bash
+# VM_IP is the IP of the Google Cloud VM
+# 11434 is the port where ollama will run
+# 8001 is the port where the local machine will listen
+# use tmux to keep this running in your local machine where you will run ollama:
+tmux new -s tunnel
+ssh -i ~/.ssh/id_rsa -R 8001:localhost:11434 alvarovh@VM_IP
+```
+That should open the connection with the VM. We have to let this running, so we can use tmux to keep it running in the background.
+
+## Running Ollama
+```bash
+OLLAMA_HOST=0.0.0.0 \
+OLLAMA_ORIGINS=http://VM_IP,http://localhost:8001 \
+ollama serve
+```
+
 # ViperGPT: Visual Inference via Python Execution for Reasoning
 
 This is the code for the paper [ViperGPT: Visual Inference via Python Execution for Reasoning](https://viper.cs.columbia.edu) by [Dídac Surís](https://www.didacsuris.com/)\*, [Sachit Menon](https://sachit-menon.github.io/)\* and [Carl Vondrick](https://www.cs.columbia.edu/~vondrick/).
