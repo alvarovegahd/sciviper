@@ -1,0 +1,6 @@
+git+https://github.com/openai/CLIP.git
+git+https://github.com/openai/openai-python.git
+git+https://github.com/huggingface/transformers.git
+gdown==5.2.0 # for model download
+gpustat # for monitoring GPU usage
+ipdb # for debugging
