@@ -64,6 +64,28 @@ ssh -i ~/.ssh/id_rsa -R 8001:localhost:11434 alvarovh@VM_IP
 ```
 That should open the connection with the VM. We have to let this running, so we can use tmux to keep it running in the background.
 
+## Then you need to change the firewall settings in the Google Cloud VM
+By default, GCP blocks external access to arbitrary ports. You need to manually open TCP port 8001 in your VM's firewall settings.
+🔧 Do this:
+
+    Go to the Google Cloud Console.
+
+    Navigate to VPC Network → Firewall rules.
+
+    Click Create Firewall Rule:
+
+        Name: allow-port-8001
+
+        Targets: All instances in the network (or your specific VM).
+        You can also use a target tag to apply the rule to specific instances, making
+        sure that the tag is set in the instance's details.
+
+        Source IP ranges: 0.0.0.0/0 (or your IP for more security)
+
+        Protocols and ports: Select Specified protocols and ports → tcp:8001
+
+    Save the rule.
+
 ## Running Ollama
 ```bash
 OLLAMA_HOST=0.0.0.0 \
