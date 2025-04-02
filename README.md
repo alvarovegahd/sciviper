@@ -93,6 +93,42 @@ OLLAMA_ORIGINS=http://VM_IP,http://localhost:8001 \
 ollama serve
 ```
 
+In this case, the ollama example command would be:
+```bash
+curl http://VM_IP:8001/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -H "Origin: http://localhost:11434" \
+  -d '{
+    "model": "deepseek-r1",
+    "messages": [
+      {"role": "system", "content": "You are a helpful assistant."},
+      {"role": "user", "content": "Why is the sky blue?"}
+    ]
+  }'
+```
+
+## With an existing Ollama server
+If you want to use an Ollama server that is already running on a local server (and cannot change its OLLAMA_HOST), we can use an ssh tunnel in the client machine to connect to it.
+
+In the client machine (i.e., greatlakes) where you will run ViperGPT, run:
+```bash
+ssh -i ~/.ssh/VM_ssh_key_name -L 8001:localhost:8001 yeda318@VM_IP
+```
+
+In this case, the ollama example command would be:
+```bash
+curl http://localhost:8001/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -H "Origin: http://localhost:11434" \
+  -d '{
+    "model": "deepseek-r1",
+    "messages": [
+      {"role": "system", "content": "You are a helpful assistant."},
+      {"role": "user", "content": "Why is the sky blue?"}
+    ]
+  }'
+```
+
 # ViperGPT: Visual Inference via Python Execution for Reasoning
 
 This is the code for the paper [ViperGPT: Visual Inference via Python Execution for Reasoning](https://viper.cs.columbia.edu) by [Dídac Surís](https://www.didacsuris.com/)\*, [Sachit Menon](https://sachit-menon.github.io/)\* and [Carl Vondrick](https://www.cs.columbia.edu/~vondrick/).
