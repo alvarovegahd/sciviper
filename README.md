@@ -99,7 +99,7 @@ curl http://VM_IP:8001/v1/chat/completions \
   -H "Content-Type: application/json" \
   -H "Origin: http://localhost:11434" \
   -d '{
-    "model": "deepseek-r1",
+    "model": "qwen2.5-coder",
     "messages": [
       {"role": "system", "content": "You are a helpful assistant."},
       {"role": "user", "content": "Why is the sky blue?"}
@@ -112,16 +112,18 @@ If you want to use an Ollama server that is already running on a local server (a
 
 In the client machine (i.e., greatlakes) where you will run ViperGPT, run:
 ```bash
-ssh -i ~/.ssh/VM_ssh_key_name -L 8001:localhost:8001 yeda318@VM_IP
+tmux new -s tunnel
+ssh -i ~/.ssh/VM_ssh_key_name -L 11434:localhost:8001 yeda318@VM_IP
+# ssh -i ~/.ssh/google_compute_engine -L 11434:localhost:8001 yeda318@34.27.32.6
 ```
 
 In this case, the ollama example command would be:
 ```bash
-curl http://localhost:8001/v1/chat/completions \
+curl http://localhost:11434/v1/chat/completions \
   -H "Content-Type: application/json" \
   -H "Origin: http://localhost:11434" \
   -d '{
-    "model": "deepseek-r1",
+    "model": "qwen2.5-coder",
     "messages": [
       {"role": "system", "content": "You are a helpful assistant."},
       {"role": "user", "content": "Why is the sky blue?"}
