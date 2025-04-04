@@ -7,7 +7,7 @@ from PIL import Image
 import pandas as pd
 from torch.utils.data import Dataset
 
-from datasets import accuracy as general_accuracy
+from datasets_local import accuracy as general_accuracy
 
 
 class MyDataset(Dataset):

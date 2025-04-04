@@ -32,7 +32,7 @@ mp.set_start_method('spawn', force=True)
 from vision_processes import forward, finish_all_consumers  # This import loads all the models. May take a while
 from image_patch import *
 from video_segment import *
-from datasets.my_dataset import MyDataset
+from datasets_local.my_dataset import MyDataset
 
 console = Console(highlight=False, force_terminal=False)
 
@@ -337,6 +337,8 @@ def execute_code(code, im, show_intermediate_steps=True):
 
     console.rule(f"[bold]Final Result[/bold]", style="chartreuse2")
     show_all(None, result, 'Result', fig=f, usefig=usefig, disp=False, console_in=console, time_wait_between_lines=0)
+
+    return result
 
 
 def show_single_image(im):
