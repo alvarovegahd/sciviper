@@ -889,32 +889,58 @@ class GPT3Model(BaseModel):
             response = [r["text"] for r in response['choices']]
         return response
 
-    def query_gpt3(self, prompt, model="text-davinci-003", max_tokens=16, logprobs=None, stream=False,
-                   stop=None, top_p=1, frequency_penalty=0, presence_penalty=0):
-        print("INSIDE QUERY GPT3")
-        if model == "chatgpt":
-            messages = [{"role": "user", "content": p} for p in prompt]
-            response = openai.ChatCompletion.create(
-                model="gpt-3.5-turbo",
-                messages=messages,
-                max_tokens=max_tokens,
-                temperature=self.temperature,
-            )
-        else:
-            response = openai.Completion.create(
-                model=model,
-                prompt=prompt,
-                max_tokens=max_tokens,
-                logprobs=logprobs,
-                temperature=self.temperature,
-                stream=stream,
-                stop=stop,
-                top_p=top_p,
-                frequency_penalty=frequency_penalty,
-                presence_penalty=presence_penalty,
-                n=self.n_votes,
-            )
-        return response
+    def query_gpt3(self, prompt,
+                model="qwen2.5-coder", 
+                max_tokens=16,
+                logprobs=None,
+                stream=False,
+                stop=None,
+                top_p=1,
+                frequency_penalty=0,
+                presence_penalty=0):
+
+        print("INSIDE QUERY GPT3 (FIXED)")
+
+        # Force the model you want
+        model = "qwen2.5-coder"
+        print("Model forced to:", model)
+
+        # If prompt is a single string, wrap in list
+        if isinstance(prompt, str):
+            prompt = [prompt]
+
+        # The new chat call expects a list of messages for each request.
+        # But if you have multiple prompts, do them one by one or in separate calls.
+        # We'll do a single call with multiple user messages if your code wants that:
+        messages = []
+        for p in prompt:
+            messages.append({"role": "user", "content": p})
+
+        resp = client.chat.completions.create(
+            model=model,
+            messages=messages,
+            max_tokens=max_tokens,
+            temperature=self.temperature,
+            top_p=top_p,
+            frequency_penalty=frequency_penalty,
+            presence_penalty=presence_penalty,
+            # stop=stop,
+            n=self.n_votes,
+            stream=stream
+        )
+
+        # Now we replicate the old structure so your code can do "response['choices'][...]['text']"
+        # NOTE: If you had multiple prompts in one request, you might see only a single "choice"
+        # but let's adapt to your existing usage:
+        choices_list = []
+        for choice in resp.choices:
+            # We store .message.content under "text" 
+            # so that old code referencing r["text"] still works
+            choices_list.append({"text": choice.message.content})
+
+        return {"choices": choices_list}
+
+
 
     def forward(self, prompt, process_name):
         if not self.to_batch:
@@ -964,108 +990,50 @@ class GPT3Model(BaseModel):
     def list_processes(cls):
         return ['gpt3_' + n for n in ['qa', 'guess', 'general']]
 
-
-# @cache.cache
 @backoff.on_exception(backoff.expo, Exception, max_tries=10)
 def codex_helper(extended_prompt):
+    """
+    Unified so that we always call client.chat.completions.create with model="qwen2.5-coder".
+    """
     print("INSIDE CODEX HELPER")
     assert 0 <= config.codex.temperature <= 1
     assert 1 <= config.codex.best_of <= 20
 
-    if config.codex.model in ("gpt-4", "gpt-3.5-turbo"):
-        if not isinstance(extended_prompt, list):
-            extended_prompt = [extended_prompt]
-        responses = [client.chat.completions.create(
-            #### Hot fix for ollama
-            # model=config.codex.model,
-            # model="deepseek-r1",
-            model = "qwen2.5-coder",
-            #######
+    # We ignore config.codex.model now, because we always use "qwen2.5-coder"
+    if not isinstance(extended_prompt, list):
+        extended_prompt = [extended_prompt]
+
+    # FIXED: We removed the old else branch with client.completions.create.
+    # Instead, we always do chat.completions.create using "qwen2.5-coder".
+    responses = [
+        client.chat.completions.create(
+            model="qwen2.5-coder",  # FIXED
             messages=[
                 {"role": "system", "content": "Only answer with a function starting def execute_command."},
-                {"role": "user", "content": prompt}
+                {"role": "user", "content": prompt},
             ],
             temperature=config.codex.temperature,
             max_tokens=config.codex.max_tokens,
-            top_p=1.,
+            top_p=1.0,
             frequency_penalty=0,
             presence_penalty=0,
-            # stop=["\n\n"],
-        ) for prompt in extended_prompt]
-        resp = [r.choices[0].message.content.replace("execute_command(image)",
-                                                       "execute_command(image, my_fig, time_wait_between_lines, syntax)")
-                for r in responses]
-    else:
-        warnings.warn('OpenAI Codex is deprecated. Please use GPT-4 or GPT-3.5-turbo.')
-        response = openai.Completion.create(
-            model="code-davinci-002",
-            temperature=config.codex.temperature,
-            prompt=extended_prompt,
-            max_tokens=config.codex.max_tokens,
-            top_p=1,
-            frequency_penalty=0,
-            presence_penalty=0,
-            best_of=config.codex.best_of,
-            stop=["\n\n"],
+            # stop=["\n\n"],  # optional if you need a stop
+            n=1,  # or config.codex.best_of if you still want multiple completions
         )
+        for prompt in extended_prompt
+    ]
 
-        if isinstance(extended_prompt, list):
-            resp = [r.text for r in response.choices]
-        else:
-            resp = response.choices[0].text
+    # For each response, extract the content
+    # e.g., r.choices[0].message.content
+    resp = [
+        r.choices[0].message.content.replace(
+            "execute_command(image)",
+            "execute_command(image, my_fig, time_wait_between_lines, syntax)"
+        )
+        for r in responses
+    ]
 
     return resp
-
-# def codex_helper(extended_prompt):
-#     print("INSIDE CODEX HELPER")
-#     assert 0 <= config.codex.temperature <= 1
-#     assert 1 <= config.codex.best_of <= 20
-
-#     if config.codex.model in ("gpt-4", "gpt-3.5-turbo"):
-#         if not isinstance(extended_prompt, list):
-#             extended_prompt = [extended_prompt]
-#         responses = [openai.ChatCompletion.create(
-#             model=config.codex.model,
-#             messages=[
-#                 # {"role": "system", "content": "You are a helpful assistant."},
-#                 {"role": "system", "content": "Only answer with a function starting def execute_command."},
-#                 {"role": "user", "content": prompt}
-#             ],
-#             temperature=config.codex.temperature,
-#             max_tokens=config.codex.max_tokens,
-#             top_p=1.,
-#             frequency_penalty=0,
-#             presence_penalty=0,
-#             #                 best_of=config.codex.best_of,
-#             stop=["\n\n"],
-#         )
-#             for prompt in extended_prompt]
-#         resp = [r['choices'][0]['message']['content'].replace("execute_command(image)",
-#                                                               "execute_command(image, my_fig, time_wait_between_lines, syntax)")
-#                 for r in responses]
-#     #         if len(resp) == 1:
-#     #             resp = resp[0]
-#     else:
-#         warnings.warn('OpenAI Codex is deprecated. Please use GPT-4 or GPT-3.5-turbo.')
-#         response = openai.Completion.create(
-#             model="code-davinci-002",
-#             temperature=config.codex.temperature,
-#             prompt=extended_prompt,
-#             max_tokens=config.codex.max_tokens,
-#             top_p=1,
-#             frequency_penalty=0,
-#             presence_penalty=0,
-#             best_of=config.codex.best_of,
-#             stop=["\n\n"],
-#         )
-
-#         if isinstance(extended_prompt, list):
-#             resp = [r['text'] for r in response['choices']]
-#         else:
-#             resp = response['choices'][0]['text']
-
-#     return resp
-
 
 class CodexModel(BaseModel):
     name = 'codex'
