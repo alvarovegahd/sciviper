@@ -45,12 +45,8 @@ def test_on_image(im, query):
     from main_simple_lib import load_image, get_code, execute_code
 
     #show_single_image(im)
-    try:
-        code = get_code(query)
-        result = execute_code(code, im, show_intermediate_steps=False)
-    except Exception as e:
-        print(f'Encountered the following exception: {e}')
-        result = f'Exception: {e}'
+    code = get_code(query)
+    result = execute_code(code, im, show_intermediate_steps=False)
     return result
 
 

@@ -309,8 +309,13 @@ def execute_code(code, im, show_intermediate_steps=True):
             result = execute_command(im, my_fig, time_wait_between_lines, syntax)  # The code is created in the exec()
         except Exception as e:
             print(f"Encountered error {e} when trying to run with visualizations. Trying from scratch.")
-            exec(compile(code, 'Codex', 'exec'), globals())
-            result = execute_command(im, my_fig, time_wait_between_lines, syntax)  # The code is created in the exec()
+            try:
+                exec(compile(code, 'Codex', 'exec'), globals())
+                result = execute_command(im, my_fig, time_wait_between_lines, syntax)  # The code is created in the exec()
+            except Exception as e:
+                print(f'Encountered the following exception: {e}')
+                result = f'Exception: {e}'
+                return result
 
         plt.close(my_fig)
 

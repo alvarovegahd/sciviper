@@ -131,6 +131,25 @@ curl http://localhost:11434/v1/chat/completions \
   }'
 ```
 
+# Testing ViperGPT on CharXiv and Grading
+
+To test ViperGPT on CharXiv, follow these steps:
+
+### To run a subset of CharXiv
+If you wish to test a subset of CharXiv (rather than thousands of questions), go into the `data` directory and remove samples from the `{mode}_{split}.json` file you would like to test on. For instance, say you want to test on the `descriptive` mode for the `val` split. Go into `descriptive_val.json` and simply delete a large portion of the images from the file (e.g., "5" and onwards). ViperGPT will only be tested and evaluated on the image-question pairs remaining in the `.json` file. (Please make sure to not commit this modified file).
+
+### To run ViperGPT
+Run `sbatch benchmark_on_charxiv.sh`. Before doing so, please do the following:
+
+- Within `benchmark_on_charxiv.sh`, update your email address, and the location of your conda installation
+- Ensure the `mode` and `split` flags match what you wish to test
+
+The results of this test will appear in `./results`. They are in the `.gitignore` and will therefore not be committed. All print statements during this run will show up in a text file in `./jobs`.
+
+### To evaluate the results
+
+Within `evaluate.sh`, change the `mode` and `split` flags to match what you gathered results for. Also, add an `openai_key`. Then simply run this script using `sh evaluate.sh` (no need for GPU support). Ideally, in the future, we can evaluate using ollama.
+
 # ViperGPT: Visual Inference via Python Execution for Reasoning
 
 This is the code for the paper [ViperGPT: Visual Inference via Python Execution for Reasoning](https://viper.cs.columbia.edu) by [Dídac Surís](https://www.didacsuris.com/)\*, [Sachit Menon](https://sachit-menon.github.io/)\* and [Carl Vondrick](https://www.cs.columbia.edu/~vondrick/).
