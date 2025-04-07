@@ -136,7 +136,7 @@ curl http://localhost:11434/v1/chat/completions \
 To test ViperGPT on CharXiv, follow these steps:
 
 ### To run a subset of CharXiv
-If you wish to test a subset of CharXiv (rather than thousands of questions), go into the `data` directory and remove samples from the `{mode}_{split}.json` file you would like to test on. For instance, say you want to test on the `descriptive` mode for the `val` split. Go into `descriptive_val.json` and simply delete a large portion of the images from the file (e.g., "5" and onwards). ViperGPT will only be tested and evaluated on the image-question pairs remaining in the `.json` file. (Please make sure to not commit this modified file).
+If you wish to test a subset of CharXiv (rather than thousands of questions), `cd` into the `data` directory and run `trim_json.py`. Be sure to modify `NUM` to be the number of images you want to test on and `FILENAME` to account for both the mode and split you want to test on. Note that this script will modify one of the json files in the `data` directory and create a backup of the original. Please do NOT commit these files. ViperGPT will only be tested and evaluated on the image-question pairs remaining in the `.json` file.
 
 ### To run ViperGPT
 Run `sbatch benchmark_on_charxiv.sh`. Before doing so, please do the following:
