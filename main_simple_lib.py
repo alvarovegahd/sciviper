@@ -270,7 +270,7 @@ def parse_function(code_block):
     
     return parsed_function
 
-def get_code(query):
+def get_code(query, code_path='generated_code'):
     print("INSIDE GET CODE!!!")
     print(config.codex.model)
     model_name_codex = 'codellama' if config.codex.model == 'codellama' else 'codex'
@@ -279,10 +279,10 @@ def get_code(query):
     # if first line starts with python, remove it. it might start with a space
     print(f"Code generated:\n {code}")
     # save to file
-    with open('generated_code.txt', 'w') as f:
+    with open(f'{code_path}.txt', 'w') as f:
         f.write(code)
     code = parse_function(code)
-    with open('generated_code_strip.txt', 'w') as f:
+    with open(f'{code_path}_strip.txt', 'w') as f:
         f.write(code)
 
     if config.codex.model not in ('gpt-3.5-turbo', 'gpt-4'):

@@ -17,4 +17,11 @@ module load cuda/12.1.1
 source /scratch/cse692w25_class_root/cse692w25_class/jhsansom/miniconda3/etc/profile.d/conda.sh
 conda activate vipergpt
 
-python benchmark_on_charxiv.py
+#python benchmark_on_charxiv.py
+
+export PYTHONPATH=$PYTHONPATH:.
+python src/generate.py \
+    --model_name vipergpt \
+    --split val \
+    --mode descriptive \
+    --model_path vipergpt

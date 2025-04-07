@@ -1051,24 +1051,25 @@ class CodexModel(BaseModel):
             with open(config.fixed_code_file) as f:
                 self.fixed_code = f.read()
 
-    def forward(self, prompt, input_type='image', prompt_file=None, base_prompt=None, extra_context=None):
-        print("INSIDE CODEX FORWARD")
-        # we will debug this functionso lets print a lot of stuff
-        print("Prompt: ", prompt)
-        print("Input type: ", input_type)
-        print("Prompt file: ", prompt_file)
-        print("Base prompt: ", base_prompt)
-        print("Extra context: ", extra_context)
+    def forward(self, prompt, input_type='image', prompt_file=None, base_prompt=None, extra_context=None, verbose=False):
+        if verbose:
+            print("INSIDE CODEX FORWARD")
+            # we will debug this functionso lets print a lot of stuff
+            print("Prompt: ", prompt)
+            print("Input type: ", input_type)
+            print("Prompt file: ", prompt_file)
+            print("Base prompt: ", base_prompt)
+            print("Extra context: ", extra_context)
         if config.use_fixed_code:  # Use the same program for every sample, like in socratic models
             print("Codex MARKER 1")
             return [self.fixed_code] * len(prompt) if isinstance(prompt, list) else self.fixed_code
 
         if prompt_file is not None and base_prompt is None:  # base_prompt takes priority
-            print("Codex MARKER 2")
+            if verbose: print("Codex MARKER 2")
             with open(prompt_file) as f:
                 base_prompt = f.read().strip()
         elif base_prompt is None:
-            print("Codex MARKER 3")
+            if verbose: print("Codex MARKER 3")
             base_prompt = self.base_prompt
 
         if isinstance(prompt, list):
@@ -1078,17 +1079,17 @@ class CodexModel(BaseModel):
                                replace('EXTRA_CONTEXT_HERE', str(ec))
                                for p, ec in zip(prompt, extra_context)]
         elif isinstance(prompt, str):
-            print("Codex MARKER 5")
+            if verbose: print("Codex MARKER 5")
             if extra_context is None:
                 extra_context = ''
             extended_prompt = [base_prompt.replace("INSERT_QUERY_HERE", prompt).
                                replace('INSERT_TYPE_HERE', input_type).
                                replace('EXTRA_CONTEXT_HERE', extra_context)]
-            print(f'Extended prompt: {extended_prompt}')
+            if verbose: print(f'Extended prompt: {extended_prompt}')
         else:
-            print("Codex MARKER 6")
+            if verbose: print("Codex MARKER 6")
             raise TypeError("prompt must be a string or a list of strings")
-        print(f'Extended prompt: {extended_prompt}')
+        if verbose: print(f'Extended prompt: {extended_prompt}')
         result = self.forward_(extended_prompt)
         if not isinstance(prompt, list):
             result = result[0]
