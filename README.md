@@ -5,7 +5,11 @@ Please check the env file: `envs/vipergpt_greatlakes.yml` for the conda environm
 
 We can use 48GB gpu with this command on greatlakes:
 ```bash
-srun --gpus=1 --account=cse692w25_class --partition=spgpu --mem-per-cpu=60g --pty zsh
+srun --gpus=1 --account=cse692w25_class --partition=spgpu --mem-per-cpu=60g --time=5:00:00 --pty zsh
+srun --gpus=1 --account=honglak0 --partition=spgpu --mem-per-cpu=60g --time=5:00:00 --pty zsh
+```
+
+Then, run the following command to activate the conda environment:
 ```
 
 I use these commands to run the code on greatlakes:
@@ -13,6 +17,7 @@ I use these commands to run the code on greatlakes:
 ```bash
 module load cuda/12.1.1
 conda activate /nfs/turbo/coe-mihalcea/alvarovh/envs/vipergpt
+conda activate vipergpt_trace
 jupyter notebook --no-browser --port=51218 --ip=0.0.0.0
 ```
 
@@ -149,6 +154,20 @@ The results of this test will appear in `./results`. They are in the `.gitignore
 ### To evaluate the results
 
 Within `evaluate.sh`, change the `mode` and `split` flags to match what you gathered results for. Also, add an `openai_key`. Then simply run this script using `sh evaluate.sh` (no need for GPU support). Ideally, in the future, we can evaluate using ollama.
+
+# Trace on ViperGPT
+## Env setup
+Follow the instructions in the `envs/install.sh` file.
+Then, put the API (or Ollama) information in `OAI_CONFIG_LIST`.
+
+## Define trainable parameters
+
+
+## Define feedback function
+
+
+## Run evaluation
+
 
 # ViperGPT: Visual Inference via Python Execution for Reasoning
 
