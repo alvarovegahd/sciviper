@@ -71,7 +71,7 @@ def build_reasoning_grading_queries(input, resp):
             REASONING_GRADING_INST[data['inst_category']])\
             .replace("<|question|>", query)\
             .replace("<|ground_truth|>", data['answer'])\
-            .replace("<|response|>", response)
+            .replace("<|response|>", str(response))
         query = {
             'figure_id': figure_id,
             'grading_query': grading_query,
