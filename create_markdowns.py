@@ -3,8 +3,8 @@ import glob
 import json
 
 # Set this to the folder with the results you want to analyze
-FOLDER = './results/results_reas_val'
-GROUND_TRUTH_JSON = './data/reasoning_val.json' # Either descriptive or reasoning based on your purpose
+FOLDER = './results/results_desc_val'
+GROUND_TRUTH_JSON = './data/descriptive_val.json' # Either descriptive or reasoning based on your purpose
 IMAGE_DATA_FOLDER = '../../images' # Relative to FOLDER
 
 markdown_template = '''
@@ -67,7 +67,13 @@ for image_q_id, data in scores_data.items():
     gen_dp = gen_data[image_q_id]
     if is_descriptive:
         image_id, q_id = image_q_id.split('_')
-        question = DESCRIPTIVE_GRADING_QMAP[gen_dp['qid']]
+        subplot_loc = gt_data[image_id]['subplot_loc']
+        if isinstance(subplot_loc, list):
+            [M, N] = gt_data[image_id]['subplot_loc']
+            question = f'For the subplot at row {M} and column {N}, '
+        else:
+            question = f'For the {subplot_loc}, '
+        question += DESCRIPTIVE_GRADING_QMAP[gen_dp['qid']]
         correct_answer = gt_data[image_id]['answers'][int(q_id)]
     else:
         image_id = image_q_id
