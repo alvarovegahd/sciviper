@@ -218,3 +218,6 @@ LAVIS/
 pretrained_models/
 # symlink
 pretrained_models
+custom_modules/images
+OAI_CONFIG_LIST
+analyze
