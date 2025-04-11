@@ -2,10 +2,37 @@ import os
 import glob
 import json
 
-# Set this to the folder with the results you want to analyze
-FOLDER = './results/results_desc_val'
-GROUND_TRUTH_JSON = './data/descriptive_val.json' # Either descriptive or reasoning based on your purpose
-IMAGE_DATA_FOLDER = '../../images' # Relative to FOLDER
+# =============================================
+# CONFIGURATION SECTION
+# =============================================
+
+# Mode configuration - uncomment one set
+CONFIG = {
+    # Reasoning validation mode
+    'mode': 'reasoning',
+    'folder': './results/reas_val',
+    'output_folder': './analyze/reas_val',
+    'ground_truth_json': './data/reasoning_val.json',
+
+    # # Descriptive validation mode
+    # 'mode': 'descriptive',
+    # 'folder': './results/desc_val',
+    # 'output_folder': './analyze/desc_val_title',
+    # 'ground_truth_json': './data/descriptive_val.json',
+
+    # Path to images (relative to OUTPUT_FOLDER)
+    'image_data_folder': '../../images',
+
+    # Filtering options
+    'skip_exceptions': True,
+    'title_only': False,  # If True, only process questions about titles
+}
+
+# Set variables from config
+FOLDER = CONFIG['folder']
+OUTPUT_FOLDER = CONFIG['output_folder']
+GROUND_TRUTH_JSON = CONFIG['ground_truth_json']
+IMAGE_DATA_FOLDER = CONFIG['image_data_folder']
 
 markdown_template = '''
 # Image {image_q_id}
@@ -57,14 +84,25 @@ search_pattern = os.path.join(FOLDER, "scores-*.json")
 scores_file = glob.glob(search_pattern)[0]
 with open(scores_file, 'r') as fp:
     scores_data = json.load(fp)
-is_descriptive = ('descriptive' in scores_file)
+is_descriptive = (CONFIG['mode'] == 'descriptive')
 with open(GROUND_TRUTH_JSON, 'r') as fp:
     gt_data = json.load(fp)
+
+# Create output directory if it doesn't exist
+os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 
 # Loop through each item in scores
 for image_q_id, data in scores_data.items():
     # Get the question and answer
     gen_dp = gen_data[image_q_id]
+
+    # Get raw model response
+    return_value = gen_dp['response']
+
+    # Skip exceptions if configured
+    if CONFIG['skip_exceptions'] and return_value and "Exception" in str(return_value):
+        continue
+
     if is_descriptive:
         image_id, q_id = image_q_id.split('_')
         subplot_loc = gt_data[image_id]['subplot_loc']
@@ -75,6 +113,10 @@ for image_q_id, data in scores_data.items():
             question = f'For the {subplot_loc}, '
         question += DESCRIPTIVE_GRADING_QMAP[gen_dp['qid']]
         correct_answer = gt_data[image_id]['answers'][int(q_id)]
+
+        # If title_only is enabled, skip non-title questions
+        if CONFIG['title_only'] and "title" not in question.lower():
+            continue
     else:
         image_id = image_q_id
         question = gen_dp['raw_question']
@@ -82,9 +124,6 @@ for image_q_id, data in scores_data.items():
 
     # Get the image path
     full_image_path = os.path.join(IMAGE_DATA_FOLDER, f'{image_id}.jpg')
-
-    # Get raw model response
-    return_value = gen_dp['response']
 
     # Get the extracted value
     extracted_value = data['extracted_answer']
@@ -118,6 +157,6 @@ for image_q_id, data in scores_data.items():
     )
 
     # Write to a file
-    save_to = os.path.join(FOLDER, f'{image_q_id}.md')
+    save_to = os.path.join(OUTPUT_FOLDER, f'{image_q_id}.md')
     with open(save_to, 'w') as fp:
         fp.write(md_text)
