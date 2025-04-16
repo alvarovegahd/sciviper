@@ -15,7 +15,9 @@ from utils import show_single_image, load_json
 from vision_processes import forward, config
 
 console = Console(highlight=False)
-
+# get output dirpath from environ variable
+import os
+output_dirpath = os.environ.get("SPECS_OUTPUT_DIR", "/scratch/cse692w25_class_root/cse692w25_class/jhsansom/results/specs/spectrograms/")
 
 class ImagePatch:
     """A Python class containing a crop of an image centered around a particular object, as well as relevant
@@ -484,3 +486,137 @@ def coerce_to_numeric(string, no_string=False):
         # No numeric values. Return input
         return string
     return numeric
+
+import cv2
+import numpy as np
+from scipy.signal import find_peaks
+import tempfile
+
+
+import cv2
+import numpy as np
+import torch
+import matplotlib.pyplot as plt
+import tempfile
+from PIL import Image
+from scipy.signal import find_peaks
+from torchvision import transforms
+
+import cv2
+import numpy as np
+import torch
+import matplotlib.pyplot as plt
+import tempfile
+from PIL import Image
+from scipy.signal import find_peaks
+from torchvision import transforms
+import cv2
+import numpy as np
+import torch
+import matplotlib.pyplot as plt
+import tempfile
+from PIL import Image
+from scipy.signal import find_peaks
+from torchvision import transforms
+def crop_fixed(img: np.ndarray, top: int = 0, bottom: int = 0,
+               left: int = 0, right: int = 0) -> np.ndarray:
+    """
+    Crops a fixed number of pixels from each side of the image.
+
+    Parameters
+    ----------
+    img : np.ndarray
+        BGR or grayscale image with shape (H, W, ...) or (H, W).
+    top : int
+        How many rows to remove from the top.
+    bottom : int
+        How many rows to remove from the bottom.
+    left : int
+        How many columns to remove from the left.
+    right : int
+        How many columns to remove from the right.
+
+    Returns
+    -------
+    np.ndarray
+        The cropped image.
+    """
+    h, w = img.shape[:2]  # ignore channels if present
+    return img[top:h-bottom, left:w-right]
+
+
+def count_syllables_spectrogram(image_patch: ImagePatch) -> int:
+    """
+    Detect and return the syllable count in a spectrogram patch.
+    Uses fixed-pixel cropping to remove a known margin from the image
+    before analyzing the intensity.
+    """
+
+    import cv2
+    import numpy as np
+    import torch
+    import matplotlib.pyplot as plt
+    from scipy.signal import find_peaks
+    from PIL import Image
+    from torchvision import transforms
+
+    # 1) Convert patch’s tensor to a NumPy BGR image
+    spectrogram_np = (image_patch.cropped_image
+                      .permute(1, 2, 0)
+                      .cpu()
+                      .numpy() * 255).astype("uint8")
+
+    # 2) Remove a known frame from all sides. Adjust these numbers to match your margin.
+    spectrogram_np = crop_fixed(spectrogram_np, top=30, bottom=30, left=40, right=40)
+
+    # 3) Convert to grayscale & invert
+    gray = cv2.cvtColor(spectrogram_np, cv2.COLOR_BGR2GRAY)
+    gray = cv2.bitwise_not(gray)
+
+    # 4) Collapse frequency axis => horizontal intensity, then smooth
+    intensity = np.mean(gray, axis=0)
+    # Larger Gaussian kernel
+    smoothed = cv2.GaussianBlur(intensity.reshape(1, -1), (1, 21), 0).flatten()
+
+    # find_peaks with stricter thresholds
+    peaks, _ = find_peaks(
+        smoothed,
+        height=np.max(smoothed) * 0.9,  # more strict
+        distance=30,                     # bigger minimum separation
+        prominence=2                     # more prominent
+    )
+
+    # Optional: post-filter the peaks if they remain too dense
+    filtered_peaks = []
+    for p in peaks:
+        if not filtered_peaks or (p - filtered_peaks[-1] > 20):
+            filtered_peaks.append(p)
+    peaks = np.array(filtered_peaks)
+
+    # 6) Optional debugging: annotate spectrogram with vertical lines
+    annotated_bgr = spectrogram_np.copy()
+    for px in peaks:
+        cv2.line(annotated_bgr, (px, 0), (px, annotated_bgr.shape[0]), (0, 255, 0), 2)
+
+    # 7) Visualize or not
+    annotated_rgb = cv2.cvtColor(annotated_bgr, cv2.COLOR_BGR2RGB)
+    fig, ax = plt.subplots(figsize=(8, 3))
+    ax.imshow(annotated_rgb)
+    ax.set_title("Annotated Spectrogram With Syllables")
+    # get current time
+    import datetime
+    now = datetime.datetime.now()
+    t = now.strftime("%Y-%m-%d %H_%M_%S")
+    plt.savefig(os.path.join(output_dirpath, "annotated_spectrogram_{}.png".format(t)))
+    # plt.show()
+
+    # 8) 1D Intensity Plot
+    fig, ax = plt.subplots(figsize=(8, 3))
+    ax.plot(smoothed, label="Intensity Over Time")
+    ax.plot(peaks, smoothed[peaks], 'rx', label="Detected Syllables")
+    ax.legend()
+    plt.savefig(os.path.join(output_dirpath, "intensity_plot_{}.png".format(t)))
+    # plt.show()
+
+    # 9) Return the syllable count
+    return len(peaks)

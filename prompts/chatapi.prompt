@@ -330,6 +330,42 @@ def coerce_to_numeric(string):
     """
     return coerce_to_numeric(string)
 
+def count_syllables_spectrogram(image_patch: ImagePatch) -> int:
+    """
+    Count the number of syllables from a spectrogram image patch
+    by analyzing its horizontal intensity signal.
+
+    Steps:
+      1. Convert the patch's cropped_image (a torch.Tensor) to an 8-bit grayscale image.
+      2. Invert the image (dark lines become bright).
+      3. Collapse frequency dimension => intensity over the time axis.
+      4. Smooth that 1D intensity signal with a Gaussian filter.
+      5. Detect peaks using scipy.signal.find_peaks.
+
+    Returns
+    -------
+    int:
+        The number of detected syllables.
+
+    Examples
+    --------
+    >>> # Basic usage inside a command:
+    >>> def execute_command(image):
+    >>>     patch = ImagePatch(image)
+    >>>     spectro_patches = patch.find("spectrogram")
+    >>>     syll_count = count_syllables_spectrogram(spectro_patches)
+    >>>     return f"There are {syll_count} syllables in this spectrogram."
+    """
+
+    spectrogram_np = (image_patch.cropped_image.permute(1, 2, 0) * 255).cpu().numpy().astype("uint8")
+    gray = cv2.cvtColor(spectrogram_np, cv2.COLOR_BGR2GRAY)
+    gray = cv2.bitwise_not(gray)
+    intensity = np.mean(gray, axis=0)
+    smoothed = cv2.GaussianBlur(intensity.reshape(1, -1), (1, 11), 0).flatten()
+    peaks, _ = find_peaks(smoothed, height=np.max(smoothed)*0.9, distance=20, prominence=1)
+    return len(peaks)
+
+
 Write a function using Python and the ImagePatch class (above) that could be executed to provide an answer to the query. 
 
 Consider the following guidelines:
