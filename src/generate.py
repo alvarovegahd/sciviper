@@ -17,6 +17,8 @@ if __name__ == '__main__':
     parser.add_argument('--model_name', type=str, required=True)
     parser.add_argument('--mode', type=str, required=True, choices=['descriptive', 'reasoning'],
                         help="Mode of the evaluation")
+    parser.add_argument('--feedback', action='store_true', default=False,
+                        help="Whether to use feedbacks or not")
 
     # custom arguments
     parser.add_argument('--model_path', type=str, required=True)
@@ -30,18 +32,24 @@ if __name__ == '__main__':
 
     # output file
     os.makedirs(args.output_dir, exist_ok=True)
-    output_file = os.path.join(args.output_dir, 
+    output_file = os.path.join(args.output_dir,
             f'gen-{args.model_name}-{args.mode}_{args.split}.json')
 
     if args.mode == 'descriptive':
-        from descriptive_utils import build_descriptive_quries
-        queries = build_descriptive_quries(data, args.image_dir)
+        from descriptive_utils import build_descriptive_quries, build_descriptive_quries_with_feedbacks
+        if args.feedback:
+            queries = build_descriptive_quries_with_feedbacks(data, args.image_dir)
+        else:
+            queries = build_descriptive_quries(data, args.image_dir)
     elif args.mode == 'reasoning':
-        from reasoning_utils import build_reasoning_queries
-        queries = build_reasoning_queries(data, args.image_dir)
-    else: 
+        from reasoning_utils import build_reasoning_queries, build_reasoning_queries_with_feedbacks
+        if args.feedback:
+            queries = build_reasoning_queries_with_feedbacks(data, args.image_dir)
+        else:
+            queries = build_reasoning_queries(data, args.image_dir)
+    else:
         raise ValueError("Mode not supported")
-    
+
     print("Number of test problems to run:", len(queries))
     print("Evaluation mode:", args.mode)
     print("Output file:", output_file)

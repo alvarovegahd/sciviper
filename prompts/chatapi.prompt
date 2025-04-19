@@ -366,11 +366,13 @@ def count_syllables_spectrogram(image_patch: ImagePatch) -> int:
     return len(peaks)
 
 
-Write a function using Python and the ImagePatch class (above) that could be executed to provide an answer to the query. 
+Write a function using Python and the ImagePatch class (above) that could be executed to provide an answer to the query.
 
 Consider the following guidelines:
 - Use base Python (comparison, sorting) for basic logical operations, left/right/up/down, math, etc.
 - Use the llm_query function to access external information and answer informational questions not concerning the image.
 - Return an answer object at the end
+
+FEEDBACK: EXTRA_CONTEXT_HERE
 
 REQUIREMENT: Write a Python function called execute_command that takes an image as input and answers the query [INSERT_QUERY_HERE]. Return ONLY the function code, without any explanations, comments, or markdown formatting. The function should start with 'def execute_command(image):' and end with the last line of the function. Do not include any text before or after the function.

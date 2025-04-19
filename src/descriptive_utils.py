@@ -157,7 +157,7 @@ def postprocess_descriptive_grading_queries(queries):
 def descriptive_query_helper(qid, subplot_loc):
     if qid in [18, 19]:
         # skip subplot location when asking about the layout of the subplots
-        return DESCRIPTIVE_RESP_INST[qid] 
+        return DESCRIPTIVE_RESP_INST[qid]
     if isinstance(subplot_loc, list):
         if subplot_loc[0] == 0:
             # when there is only one subplot
@@ -186,6 +186,56 @@ def build_descriptive_quries(data, image_dir):
                 'subq_idx': i, # index of the (4) questions for the given figure
                 'qid': d['qids'][i], # template id
                 'question': question, # question content
-            }                
+            }
+            queries[f"{d['figure_id']}_{i}"] = curr_query
+    return queries
+
+def build_descriptive_quries_with_feedbacks(data, image_dir):
+    import glob
+    FOLDER = '/scratch/cse692w25_class_root/cse692w25_class/jhsansom/results/desc_val'
+    search_pattern = os.path.join(FOLDER, "gen-*.json")
+    gen_file = glob.glob(search_pattern)[0]
+    with open(gen_file, 'r') as fp:
+        gen_data = json.load(fp)
+    feedback_template = (
+        "Below is the previous code and the corresponding error message. Please review each class's attributes and properties carefully. "
+        "Do **not** generate the same code again.\n\n"
+        "— Previous Code —\n"
+        "{code}\n\n"
+        "— Error Message —\n"
+        "{full_return}"
+        "This error indicates that your solution is trying to use features or attributes that don't exist in the provided classes.\n"
+        "Please:\n1. Carefully re-examine the class documentation at the beginning of the prompt\n2. Pay special attention to the available attributes and methods of each class\n3. Do NOT repeat the same approach that caused the error\n4. Develop a new solution that only uses documented attributes and methods\n5. Test your logic against the error message to ensure you've resolved the issue\n"
+        "Remember that the classes may have different capabilities than you initially assumed. Your new solution should work within the constraints of what's actually available in the API."
+    )
+
+    code = None
+    full_return = None
+
+    queries = {}
+    for _, d in data.items():
+        figure_path = os.path.join(image_dir, f"{d['figure_id']}.jpg")
+        for i in range(len(d['qids'])):
+            # mapping from template id and subplot location to the question
+            question = descriptive_query_helper(d['qids'][i], d['subplot_loc'])
+
+            image_q_id = f"{d['figure_id']}_{i}"
+            gen_dp = gen_data[image_q_id]
+            full_return = gen_dp['response']
+            if full_return is None or 'Exception' not in str(full_return):
+                continue
+
+            code_filepath = os.path.join(FOLDER, f'code_{image_q_id}.txt')
+            with open(code_filepath, 'r') as fp:
+                code = fp.read()
+
+            curr_query = {
+                'figure_id': d['figure_id'], # figure_id
+                'figure_path': figure_path, # figure_path (dropped later)
+                'subq_idx': i, # index of the (4) questions for the given figure
+                'qid': d['qids'][i], # template id
+                'question': question, # question content
+                'feedback': feedback_template.format(code=code, full_return=full_return), # feedback from previous run
+            }
             queries[f"{d['figure_id']}_{i}"] = curr_query
     return queries

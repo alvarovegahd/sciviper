@@ -97,8 +97,66 @@ def build_reasoning_queries(data, image_dir):
             'figure_id': d['figure_id'], # figure_id
             'figure_path': figure_path, # figure_path
             'inst_category': inst_category, # instruction category
-            'raw_question': d['query'], # question @@@ without @@@ instruction 
+            'raw_question': d['query'], # question @@@ without @@@ instruction
             'question': question, # question with instruction
+        }
+        queries[d['figure_id']] = query
+    return queries
+
+def build_reasoning_queries_with_feedbacks(data, image_dir):
+    import glob
+    FOLDER = '/scratch/cse692w25_class_root/cse692w25_class/jhsansom/results/reas_val'
+    search_pattern = os.path.join(FOLDER, "gen-*.json")
+    gen_file = glob.glob(search_pattern)[0]
+    with open(gen_file, 'r') as fp:
+        gen_data = json.load(fp)
+    feedback_template = (
+        "Below is the previous code and the corresponding error message. Please review each class's attributes and properties carefully. "
+        "Do **not** generate the same code again.\n\n"
+        "— Previous Code —\n"
+        "{code}\n\n"
+        "— Error Message —\n"
+        "{full_return}"
+        "This error indicates that your solution is trying to use features or attributes that don't exist in the provided classes.\n"
+        "Please:\n1. Carefully re-examine the class documentation at the beginning of the prompt\n2. Pay special attention to the available attributes and methods of each class\n3. Do NOT repeat the same approach that caused the error\n4. Develop a new solution that only uses documented attributes and methods\n5. Test your logic against the error message to ensure you've resolved the issue\n"
+        "Remember that the classes may have different capabilities than you initially assumed. Your new solution should work within the constraints of what's actually available in the API."
+    )
+
+
+    code = None
+    full_return = None
+
+    queries = {}
+    for _, d in data.items():
+        figure_path = os.path.join(image_dir, f"{d['figure_id']}.jpg")
+        inst_category = d['inst_category']
+        # 1: text-in-chart, 2: text-in-general, 3: number-in-chart
+        if inst_category in [1, 2, 3]:
+            question = REASONING_RESP_INST[inst_category].format(d['query'])
+        # 4: number-in-general -> need to specify the number of decimal places
+        elif inst_category == 4:
+            question = REASONING_RESP_INST[inst_category].format(d['query'], \
+                                        get_number_instruction(d['answer']))
+        else:
+            raise ValueError(f"Invalid instruction category: {inst_category}")
+
+        image_q_id = f"{d['figure_id']}"
+        gen_dp = gen_data[image_q_id]
+        full_return = gen_dp['response']
+        if full_return is None or 'Exception' not in str(full_return):
+            continue
+
+        code_filepath = os.path.join(FOLDER, f'code_{image_q_id}.txt')
+        with open(code_filepath, 'r') as fp:
+            code = fp.read()
+
+        query = {
+            'figure_id': d['figure_id'], # figure_id
+            'figure_path': figure_path, # figure_path
+            'inst_category': inst_category, # instruction category
+            'raw_question': d['query'], # question @@@ without @@@ instruction
+            'question': question, # question with instruction
+            'feedback': feedback_template.format(code=code, full_return=full_return), # feedback from previous run
         }
         queries[d['figure_id']] = query
     return queries

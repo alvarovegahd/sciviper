@@ -259,22 +259,22 @@ def parse_function(code_block):
         function_code = parts[1]
     else:
         function_code = code_block
-    
+
     # Remove the "python" line if present
     lines = function_code.split('\n')
     if lines[0].strip().lower() == 'python':
         lines = lines[1:]
-    
+
     # Join the lines and strip whitespace
     parsed_function = '\n'.join(lines).strip()
-    
+
     return parsed_function
 
-def get_code(query, code_path='generated_code'):
+def get_code(query, code_path='generated_code', extra_context=None, verbose=False):
     print("INSIDE GET CODE!!!")
     print(config.codex.model)
     model_name_codex = 'codellama' if config.codex.model == 'codellama' else 'codex'
-    code = forward(model_name_codex, prompt=query, input_type="image")
+    code = forward(model_name_codex,  prompt=query, input_type="image", extra_context=extra_context, verbose=verbose)
     # replace ``` at the begining and ``` at the end with empty string if they are present at the beginning and end
     # if first line starts with python, remove it. it might start with a space
     print(f"Code generated:\n {code}")
