@@ -111,15 +111,9 @@ def build_reasoning_queries_with_feedbacks(data, image_dir):
     with open(gen_file, 'r') as fp:
         gen_data = json.load(fp)
     feedback_template = (
-        "Below is the previous code and the corresponding error message. Please review each class's attributes and properties carefully. "
-        "Do **not** generate the same code again.\n\n"
-        "— Previous Code —\n"
-        "{code}\n\n"
+        "Below is the error message from a previous run. Please carefully re-examine the class documentation at the beginning of the prompt. Test your logic against the error message to ensure you've resolved the issue.\n"
         "— Error Message —\n"
         "{full_return}"
-        "This error indicates that your solution is trying to use features or attributes that don't exist in the provided classes.\n"
-        "Please:\n1. Carefully re-examine the class documentation at the beginning of the prompt\n2. Pay special attention to the available attributes and methods of each class\n3. Do NOT repeat the same approach that caused the error\n4. Develop a new solution that only uses documented attributes and methods\n5. Test your logic against the error message to ensure you've resolved the issue\n"
-        "Remember that the classes may have different capabilities than you initially assumed. Your new solution should work within the constraints of what's actually available in the API."
     )
 
 
@@ -146,9 +140,9 @@ def build_reasoning_queries_with_feedbacks(data, image_dir):
         if full_return is None or 'Exception' not in str(full_return):
             continue
 
-        code_filepath = os.path.join(FOLDER, f'code_{image_q_id}.txt')
-        with open(code_filepath, 'r') as fp:
-            code = fp.read()
+        # code_filepath = os.path.join(FOLDER, f'code_{image_q_id}.txt')
+        # with open(code_filepath, 'r') as fp:
+        #     code = fp.read()
 
         query = {
             'figure_id': d['figure_id'], # figure_id
@@ -156,7 +150,7 @@ def build_reasoning_queries_with_feedbacks(data, image_dir):
             'inst_category': inst_category, # instruction category
             'raw_question': d['query'], # question @@@ without @@@ instruction
             'question': question, # question with instruction
-            'feedback': feedback_template.format(code=code, full_return=full_return), # feedback from previous run
+            'feedback': feedback_template.format(full_return=full_return), # feedback from previous run
         }
         queries[d['figure_id']] = query
     return queries
