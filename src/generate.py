@@ -36,11 +36,11 @@ if __name__ == '__main__':
             f'gen-{args.model_name}-{args.mode}_{args.split}.json')
 
     if args.mode == 'descriptive':
-        from descriptive_utils import build_descriptive_quries, build_descriptive_quries_with_feedbacks
+        from descriptive_utils import build_descriptive_queries, build_descriptive_queries_with_feedbacks
         if args.feedback:
-            queries = build_descriptive_quries_with_feedbacks(data, args.image_dir)
+            queries = build_descriptive_queries_with_feedbacks(data, args.image_dir)
         else:
-            queries = build_descriptive_quries(data, args.image_dir)
+            queries = build_descriptive_queries(data, args.image_dir)
     elif args.mode == 'reasoning':
         from reasoning_utils import build_reasoning_queries, build_reasoning_queries_with_feedbacks
         if args.feedback:

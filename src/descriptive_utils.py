@@ -173,7 +173,7 @@ def descriptive_query_helper(qid, subplot_loc):
     # return the question with the subplot location
     return DESCRIPTIVE_RESP_INST[qid].format(prefix)
 
-def build_descriptive_quries(data, image_dir):
+def build_descriptive_queries(data, image_dir):
     queries = {}
     for _, d in data.items():
         figure_path = os.path.join(image_dir, f"{d['figure_id']}.jpg")
@@ -190,7 +190,7 @@ def build_descriptive_quries(data, image_dir):
             queries[f"{d['figure_id']}_{i}"] = curr_query
     return queries
 
-def build_descriptive_quries_with_feedbacks(data, image_dir):
+def build_descriptive_queries_with_feedbacks(data, image_dir):
     import glob
     FOLDER = '/scratch/cse692w25_class_root/cse692w25_class/jhsansom/results/desc_val'
     search_pattern = os.path.join(FOLDER, "gen-*.json")

@@ -160,14 +160,15 @@ Within `evaluate.sh`, change the `mode` and `split` flags to match what you gath
 Follow the instructions in the `envs/install.sh` file.
 Then, put the API (or Ollama) information in `OAI_CONFIG_LIST`.
 
-## Define trainable parameters
+## Simplified feedback inspired by Trace
+To include feedback from previous runs, add the `--feedback` option when running `src/generate.py` in the `benchmark_on_charxiv.sh` script. Follow the instructions under `### To run ViperGPT` to run the script.
 
+When `--feedback` is used, the script switches from using `build_descriptive_queries` or `build_reasoning_queries` to special versions that include feedback: `build_descriptive_queries_with_feedbacks` or `build_reasoning_queries_with_feedbacks`.
 
-## Define feedback function
+These versions add feedback into the prompt. The feedback is loaded from files located at:
+`/scratch/cse692w25_class_root/cse692w25_class/jhsansom/results/`.
 
-
-## Run evaluation
-
+Only questions that previously failed (i.e., had Exceptions) are included. The feedback shows the exception message, and the exact format is defined in the `_with_feedbacks` functions.
 
 # ViperGPT: Visual Inference via Python Execution for Reasoning
 
