@@ -890,7 +890,7 @@ class GPT3Model(BaseModel):
         return response
 
     def query_gpt3(self, prompt,
-                model="qwen2.5-coder", 
+                model="qwen2.5-coder",
                 max_tokens=16,
                 logprobs=None,
                 stream=False,
@@ -934,7 +934,7 @@ class GPT3Model(BaseModel):
         # but let's adapt to your existing usage:
         choices_list = []
         for choice in resp.choices:
-            # We store .message.content under "text" 
+            # We store .message.content under "text"
             # so that old code referencing r["text"] still works
             choices_list.append({"text": choice.message.content})
 
@@ -1474,3 +1474,143 @@ class XVLMModel(BaseModel):
         else:  # binary
             score = self.binary_score(image, text, negative_categories=negative_categories)
         return score.cpu()
+
+##########################################################################################################
+
+import base64
+import re
+import torch
+from io import BytesIO
+from PIL import Image
+from openai import OpenAI
+from torchvision.transforms import ToPILImage
+
+class QwenVLModel(BaseModel):
+    name = 'qwen_vl'
+    to_batch = False
+    # max_batch_size = 16  # Reduced from BLIP's 32 due to Qwen's larger size
+    # seconds_collect_data = 0.3  # Slightly increased collection time for the larger model
+
+    def __init__(self, gpu_number=0, api_base="http://34.31.189.7:8001/v1", api_key="EMPTY"):
+        super().__init__(gpu_number)
+
+        self.model_name = "Qwen/Qwen2.5-VL-72B-Instruct-AWQ"
+
+        # Initialize OpenAI client
+        self.client = OpenAI(
+            api_key=api_key,
+            base_url=api_base
+        )
+
+        # # Test connection
+        # try:
+        #     response = self.client.models.list()
+        #     print(f"Connected to vLLM API: Available models detected")
+        # except Exception as e:
+        #     print(f"Warning: Error connecting to vLLM API: {e}")
+
+        # print(f"Initialized QwenVLModel using {self.model_name} via vLLM")
+
+    def _encode_image(self, image):
+        """Convert PIL image or torch tensor to base64 string"""
+        if isinstance(image, torch.Tensor):
+            image = image.permute(1, 2, 0).numpy()  # CHW -> HWC
+            pil_image = Image.fromarray((image * 255).astype('uint8')) if image.max() <= 1 else Image.fromarray(image.astype('uint8'))
+        elif isinstance(image, Image.Image):
+            pass
+        else:
+            raise ValueError("Unsupported image format")
+
+        buffer = BytesIO()
+        pil_image.save(buffer, format="JPEG")
+        encoded_image = base64.b64encode(buffer.getvalue()).decode('utf-8')
+
+        return f"data:image/jpeg;base64,{encoded_image}"
+
+    def _call_api(self, images, prompts):
+        """Call the vLLM API with OpenAI client"""
+
+        verbose = False
+        if verbose:
+            print("prompts:", prompts)
+
+        batch_results = []
+
+        for i in range(len(images)):
+            base64_qwen = self._encode_image(images[i])
+
+            try:
+                response = self.client.chat.completions.create(
+                    model=self.model_name,
+                    messages=[
+                        {"role": "system", "content": "You are a helpful visual assistant."},
+                        {
+                            "role": "user",
+                            "content": [
+                                {"type": "image_url", "image_url": {"url": base64_qwen}},
+                                {"type": "text", "text": prompts[i]}
+                            ]
+                        }
+                    ],
+                    max_tokens=300,
+                    temperature=0.7,
+                )
+
+                result = response.choices[0].message.content
+                batch_results.append(result)
+            except Exception as e:
+                print(f"Exception during API call: {e}")
+                batch_results.append("Error processing request")
+
+        return batch_results
+
+    def _create_prompt(self, text, task):
+        """Create appropriate prompt based on task, optimized for short answers."""
+        if task == 'caption':
+            return "Please describe this image in one sentence."
+        elif task == 'qa':
+            return f"Answer briefly and directly:  {text}"
+        else:
+            return text
+
+    @torch.no_grad()
+    def caption(self, images, prompt=None):
+        """Generate captions for images"""
+        prompts = [self._create_prompt(prompt, 'caption') for _ in range(len(images))]
+        results = self._call_api(images, prompts)
+        return results
+
+    @torch.no_grad()
+    def qa(self, images, questions):
+        """Answer questions about images"""
+        if isinstance(questions, str):
+            questions = [questions]
+
+        prompts = [self._create_prompt(q, 'qa') for q in questions]
+        results = self._call_api(images, prompts)
+        return results
+
+    def forward(self, image, question=None, task='caption'):
+        """Forward pass to maintain compatibility with the original BLIP interface"""
+        if not self.to_batch:
+            image, question, task = [image], [question], [task]
+
+        # Process images by task
+        prompts_qa = [q for q, t in zip(question, task) if t == 'qa']
+        images_qa = [im for i, im in enumerate(image) if task[i] == 'qa']
+        images_caption = [im for i, im in enumerate(image) if task[i] == 'caption']
+
+        response_qa = self.qa(images_qa, prompts_qa) if len(images_qa) > 0 else []
+        response_caption = self.caption(images_caption) if len(images_caption) > 0 else []
+
+        # Combine results in the original order
+        response = []
+        for t in task:
+            if t == 'qa':
+                response.append(response_qa.pop(0))
+            else:
+                response.append(response_caption.pop(0))
+
+        if not self.to_batch:
+            response = response[0]
+        return response
