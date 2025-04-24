@@ -261,9 +261,9 @@ class ImagePatch:
         question : str
             A string describing the question to be asked.
         """
-        return self.forward('blip', self.cropped_image, question, task='qa')
+        # return self.forward('blip', self.cropped_image, question, task='qa')
         ####### Hot fix:
-        # return self.forward('qwen_vl', self.cropped_image, question, task='qa')
+        return self.forward('qwen_vl', self.cropped_image, question, task='qa')
         #######
 
     def compute_depth(self):
