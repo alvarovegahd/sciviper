@@ -19,7 +19,8 @@ if __name__ == '__main__':
                         help="Mode of the evaluation")
     parser.add_argument('--feedback', action='store_true', default=False,
                         help="Whether to use feedbacks or not")
-
+    parser.add_argument('--feedback_include_code', action='store_true', default=False,
+                        help="Whether to include code in feedbacks or not")
     # custom arguments
     parser.add_argument('--model_path', type=str, required=True)
     parser.add_argument('--model_api', type=str, required=False, default=None)
@@ -38,13 +39,13 @@ if __name__ == '__main__':
     if args.mode == 'descriptive':
         from descriptive_utils import build_descriptive_queries, build_descriptive_queries_with_feedbacks
         if args.feedback:
-            queries = build_descriptive_queries_with_feedbacks(data, args.image_dir)
+            queries = build_descriptive_queries_with_feedbacks(data, args.image_dir, include_code=args.feedback_include_code)
         else:
             queries = build_descriptive_queries(data, args.image_dir)
     elif args.mode == 'reasoning':
         from reasoning_utils import build_reasoning_queries, build_reasoning_queries_with_feedbacks
         if args.feedback:
-            queries = build_reasoning_queries_with_feedbacks(data, args.image_dir)
+            queries = build_reasoning_queries_with_feedbacks(data, args.image_dir, include_code=args.feedback_include_code)
         else:
             queries = build_reasoning_queries(data, args.image_dir)
     else:

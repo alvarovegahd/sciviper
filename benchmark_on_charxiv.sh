@@ -25,4 +25,5 @@ python src/generate.py \
     --split val \
     --mode descriptive \
     --model_path vipergpt \
-    --feedback
+    --feedback \
+    --feedback_include_code
