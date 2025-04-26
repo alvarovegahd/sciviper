@@ -37,7 +37,8 @@ from utils import HiddenPrints
 # client = OpenAI(api_key=openai.api_key)
 
 client = OpenAI(
-    base_url='http://35.184.244.69:8001/v1',
+    base_url="http://34.31.189.7:8001/v1",
+    #base_url='http://35.184.244.69:8001/v1',
     # base_url = 'http://localhost:11434/v1', # we may use GCP proxy of our lab's machines
 
     api_key='ollama', # required, but unused
@@ -1007,7 +1008,7 @@ def codex_helper(extended_prompt):
     # Instead, we always do chat.completions.create using "qwen2.5-coder".
     responses = [
         client.chat.completions.create(
-            model="qwen2.5-coder",  # FIXED
+            model="Qwen/Qwen2.5-VL-72B-Instruct-AWQ",  # FIXED
             messages=[
                 {"role": "system", "content": "Only answer with a function starting def execute_command."},
                 {"role": "user", "content": prompt},
