@@ -192,7 +192,7 @@ def build_descriptive_queries(data, image_dir):
 
 def build_descriptive_queries_with_feedbacks(data, image_dir, include_code=False):
     import glob
-    FOLDER = '/scratch/cse692w25_class_root/cse692w25_class/jhsansom/results/desc_val'
+    FOLDER = '/scratch/cse692w25_class_root/cse692w25_class/jhsansom/results/desc_qwen72b'
     search_pattern = os.path.join(FOLDER, "gen-*.json")
     gen_file = glob.glob(search_pattern)[0]
     with open(gen_file, 'r') as fp:

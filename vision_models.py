@@ -1554,7 +1554,9 @@ class QwenVLModel(BaseModel):
                         }
                     ],
                     max_tokens=300,
-                    temperature=0.7,
+                    # temperature=0.7,
+                    temperature=0.0,
+
                 )
 
                 result = response.choices[0].message.content
