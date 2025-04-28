@@ -1,0 +1,31 @@
+index,specs,peak_freq_pred,n_syllables_pred
+0,210924-071028_uiM_tt_28s.jpg,No red dashed line found in the spectrogram.,3
+1,210624-094108_1s_uM_tt.jpg,0.1 Hz,4
+2,210707-112111_6s_mie_tt.jpg,No red dashed line found in the spectrogram.,6
+3,210625-114034_3s_man_tt.jpg,0.5 Hz,4
+4,210914-080445_uafP_tt_1s.jpg,No red dashed line found in the spectrogram.,10
+5,211209-112549_uM_tt_78s.jpg,The peak frequency appears to be around 10 Hz.,2
+6,220223-075957_25s_uT_tt.jpg,0.5 Hz,6
+7,211103-082228_TAN_tt_1s.jpg,The peak frequency is approximately 0.5 Hz.,6
+8,220120-134001_61s_TRU_tt.jpg,The peak frequency is approximately 0.5 Hz.,7
+9,210924-071430_MEZ_tt_29s.jpg,The peak frequency is approximately 0.1 Hz.,6
+10,210623-141552_5s_tot_tt.jpg,0.1 Hz,2
+11,210625-113350_55s_mis_tt.jpg,0.1 Hz,5
+12,210624-064957_38s_mez_tt.jpg,No red dashed line found in the spectrogram.,5
+13,210405_0699_24s_tic_tt.jpg,0.1 Hz,9
+14,210715-111006_16s_uiM_tt.jpg,0.5 Hz,4
+15,220120-133810_82s_TRU_tt.jpg,The peak frequency is approximately 0.1 Hz.,13
+16,210924-075636_MEZ_tt_5s.jpg,The peak frequency appears to be around 100 Hz.,4
+17,210412_0729_219s_ter_tt.jpg,No red dashed line found in the spectrogram.,7
+18,220120-133810_53s_TRU_tt.jpg,The peak frequency is approximately 0.5 Hz.,12
+19,211123-104000_TRU_tt_5s.jpg,0.1 Hz,5
+20,210629-075830_16s_ujfM_tt.jpg,The peak frequency is approximately 0.5 Hz.,2
+21,221213-111919_41s_MUL_tt.jpg,No red dashed line found in the spectrogram.,8
+22,211215-091739_PAT_tt_27s.jpg,No red dashed line found in the spectrogram.,6
+23,210624-143821_4s_uM_tt.jpg,0.1 Hz,6
+24,210621-120822_16s_ujfM_tt.jpg,The peak frequency is approximately 100 Hz.,7
+25,210617-083954_9s_mul_tt.jpg,No red dashed line found in the spectrogram.,7
+26,210928-091542_TET_tt_19s.jpg,No red dashed line found in the spectrogram.,8
+27,211117-070643_TEL_tt_2.0s.jpg,0.2 Hz,6
+28,220120-133241_52s_TRU_tt.jpg,0.5 Hz,7
+29,210621-121359_75s_ujfM_tt.jpg,0.1 Hz,7
