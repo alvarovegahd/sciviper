@@ -6,7 +6,6 @@ Please check the env file: `envs/vipergpt_greatlakes.yml` for the conda environm
 We can use 48GB gpu with this command on greatlakes:
 ```bash
 srun --gpus=1 --account=cse692w25_class --partition=spgpu --mem-per-cpu=60g --time=5:00:00 --pty zsh
-srun --gpus=1 --account=honglak0 --partition=spgpu --mem-per-cpu=60g --time=5:00:00 --pty zsh
 ```
 
 Then, run the following command to activate the conda environment:
@@ -119,7 +118,6 @@ In the client machine (i.e., greatlakes) where you will run ViperGPT, run:
 ```bash
 tmux new -s tunnel
 ssh -i ~/.ssh/VM_ssh_key_name -L 11434:localhost:8001 yeda318@VM_IP
-# ssh -i ~/.ssh/google_compute_engine -L 11434:localhost:8001 yeda318@34.27.32.6
 ```
 
 In this case, the ollama example command would be:
